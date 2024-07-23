@@ -3,11 +3,21 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import pickle
+import joblib as jb
 from sklearn.metrics import accuracy_score, confusion_matrix
 
-with open('./models/svc.pkl', 'rb') as file:
-    model = pickle.load(file)
+
+models = {
+    "Logistic Regression": jb.load('./models/logistic_regression.pkl'),
+    "K-Nearest Neighbors": jb.load('./models/k_nearest_neighbors.pkl'),
+    "Support Vector Machine": jb.load('./models/support_vector_machine.pkl'),
+    "Decision Tree": jb.load('./models/decision_tree.pkl'),
+    "Random Forest": jb.load('./models/random_forest.pkl'),
+    "Gradient Boosting": jb.load('./models/gradient_boosting.pkl'),
+    "AdaBoost": jb.load('./models/ada_boost.pkl'),
+    "Gaussian Naive Bayes": jb.load('./models/gaussian_naive_bayes.pkl'),
+    "XGBoost": jb.load('./models/x_g_boost.pkl'),
+}
 
 grade_class = {
     0: 'A',
@@ -17,6 +27,7 @@ grade_class = {
     4: 'F',
 }
 
+option = st.selectbox('請選擇模型', models.keys())
 
 def use_form():
     with st.form('form'):
@@ -28,6 +39,7 @@ def use_form():
 
         submitted = st.form_submit_button("確認", use_container_width=True)
         if submitted:
+            model = models[option]
             grade = model.predict(pd.DataFrame({
                 'Absences': [absences],
                 'StudyTimeWeekly': [study_time_weekly],
@@ -43,6 +55,7 @@ def use_file():
         
         submitted = st.form_submit_button("確認", use_container_width=True)
         if submitted and uploaded_file is not None:
+            model = models[option]
             df = pd.read_csv(uploaded_file)
             X_test = df.loc[:,['Absences', 'StudyTimeWeekly', 'ParentalSupport']]
             y_test = df.loc[:, ['GradeClass']]
@@ -59,7 +72,6 @@ def use_file():
                 st.dataframe(result)
             with col2: 
                 st.pyplot(plt)
-                st.dataframe(y_pred)
 
 
 page_names_to_funcs = {
