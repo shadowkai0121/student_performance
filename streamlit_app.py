@@ -1,12 +1,13 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib as jb
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pickle
 from sklearn.metrics import accuracy_score, confusion_matrix
 
-model = jb.load('./models/svc.pkl')
+with open('./models/svc.pkl', 'rb') as file:
+    model = pickle.load(file)
 
 grade_class = {
     0: 'A',
@@ -43,11 +44,12 @@ def use_file():
         submitted = st.form_submit_button("確認", use_container_width=True)
         if submitted and uploaded_file is not None:
             df = pd.read_csv(uploaded_file)
-            X_df = df.loc[:,['Absences', 'StudyTimeWeekly', 'ParentalSupport']]
-            y_df = pd.DataFrame({'預測成績': model.predict(X_df)})
-            result = df.loc[:, ['StudentID', 'GradeClass']].join(y_df)
-            score = round(accuracy_score(df.loc[:, ['GradeClass']], y_df), 3)
-            cm = confusion_matrix(df.loc[:, ['GradeClass']], y_df)
+            X_test = df.loc[:,['Absences', 'StudyTimeWeekly', 'ParentalSupport']]
+            y_test = df.loc[:, ['GradeClass']]
+            y_pred = pd.DataFrame({'預測成績': model.predict(X_test)})
+            result = df.loc[:, ['StudentID', 'GradeClass']].join(y_pred)
+            score = round(accuracy_score(y_test, y_pred), 3)
+            cm = confusion_matrix(y_test, y_pred)
             plt.title('Accuracy Score: {0}'.format(score), size=15)
             sns.heatmap(cm, annot=True, fmt=".0f")
             plt.xlabel('Predicted Values')
@@ -57,6 +59,7 @@ def use_file():
                 st.dataframe(result)
             with col2: 
                 st.pyplot(plt)
+                st.dataframe(y_pred)
 
 
 page_names_to_funcs = {
